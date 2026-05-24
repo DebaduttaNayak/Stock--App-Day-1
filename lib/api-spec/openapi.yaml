@@ -1,0 +1,555 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Stock Screener API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: stocks
+    description: Stock screener operations
+  - name: market
+    description: Market summary operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /stocks:
+    get:
+      operationId: listStocks
+      tags: [stocks]
+      summary: List and filter stocks
+      description: Returns paginated, filtered, and sorted stock records
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sector
+          in: query
+          schema:
+            type: string
+        - name: exchange
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: minMarketCap
+          in: query
+          schema:
+            type: number
+        - name: maxMarketCap
+          in: query
+          schema:
+            type: number
+        - name: minPe
+          in: query
+          schema:
+            type: number
+        - name: maxPe
+          in: query
+          schema:
+            type: number
+        - name: minVolume
+          in: query
+          schema:
+            type: number
+        - name: maxVolume
+          in: query
+          schema:
+            type: number
+        - name: minChangePercent
+          in: query
+          schema:
+            type: number
+        - name: maxChangePercent
+          in: query
+          schema:
+            type: number
+        - name: minRsi
+          in: query
+          schema:
+            type: number
+        - name: maxRsi
+          in: query
+          schema:
+            type: number
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: Stock list with pagination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockListResponse"
+
+  /stocks/{ticker}:
+    get:
+      operationId: getStock
+      tags: [stocks]
+      summary: Get single stock detail
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stock detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stocks/{ticker}/candles/{period}:
+    get:
+      operationId: getStockCandles
+      tags: [stocks]
+      summary: Get OHLCV candlestick data with technical indicators
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [1d, 5d, 1m, 3m, 6m, 1y, 2y, 5y]
+      responses:
+        "200":
+          description: Candlestick data with indicators
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandleResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /market/summary:
+    get:
+      operationId: getMarketSummary
+      tags: [market]
+      summary: Get market-wide summary stats
+      responses:
+        "200":
+          description: Market summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketSummary"
+
+  /market/sectors:
+    get:
+      operationId: getMarketSectors
+      tags: [market]
+      summary: Get sector performance breakdown
+      responses:
+        "200":
+          description: Sector performance list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SectorPerformance"
+
+  /market/top-movers:
+    get:
+      operationId: getTopMovers
+      tags: [market]
+      summary: Get top gainers, losers, and most active
+      responses:
+        "200":
+          description: Top movers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopMovers"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Stock:
+      type: object
+      required:
+        - ticker
+        - name
+        - exchange
+        - sector
+        - price
+        - change
+        - changePercent
+        - volume
+        - avgVolume
+        - marketCap
+        - pe
+        - eps
+        - high52w
+        - low52w
+        - rsi
+        - beta
+      properties:
+        ticker:
+          type: string
+        name:
+          type: string
+        exchange:
+          type: string
+        sector:
+          type: string
+        industry:
+          type: string
+        price:
+          type: number
+        change:
+          type: number
+        changePercent:
+          type: number
+        volume:
+          type: number
+        avgVolume:
+          type: number
+        marketCap:
+          type: number
+        pe:
+          type: ["number", "null"]
+        eps:
+          type: ["number", "null"]
+        high52w:
+          type: number
+        low52w:
+          type: number
+        rsi:
+          type: number
+        beta:
+          type: number
+        dividendYield:
+          type: ["number", "null"]
+
+    StockListResponse:
+      type: object
+      required:
+        - stocks
+        - total
+        - page
+        - pageSize
+      properties:
+        stocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    StockDetail:
+      type: object
+      required:
+        - ticker
+        - name
+        - exchange
+        - sector
+        - price
+        - change
+        - changePercent
+        - volume
+        - avgVolume
+        - marketCap
+        - pe
+        - eps
+        - high52w
+        - low52w
+        - rsi
+        - beta
+        - description
+        - employees
+        - founded
+        - ceo
+        - website
+      properties:
+        ticker:
+          type: string
+        name:
+          type: string
+        exchange:
+          type: string
+        sector:
+          type: string
+        industry:
+          type: string
+        price:
+          type: number
+        change:
+          type: number
+        changePercent:
+          type: number
+        volume:
+          type: number
+        avgVolume:
+          type: number
+        marketCap:
+          type: number
+        pe:
+          type: ["number", "null"]
+        eps:
+          type: ["number", "null"]
+        high52w:
+          type: number
+        low52w:
+          type: number
+        rsi:
+          type: number
+        beta:
+          type: number
+        dividendYield:
+          type: ["number", "null"]
+        description:
+          type: string
+        employees:
+          type: ["integer", "null"]
+        founded:
+          type: ["integer", "null"]
+        ceo:
+          type: string
+        website:
+          type: string
+        revenueGrowth:
+          type: ["number", "null"]
+        grossMargin:
+          type: ["number", "null"]
+        debtToEquity:
+          type: ["number", "null"]
+
+    Candle:
+      type: object
+      required:
+        - timestamp
+        - open
+        - high
+        - low
+        - close
+        - volume
+      properties:
+        timestamp:
+          type: string
+        open:
+          type: number
+        high:
+          type: number
+        low:
+          type: number
+        close:
+          type: number
+        volume:
+          type: number
+
+    TechnicalIndicators:
+      type: object
+      properties:
+        sma20:
+          type: array
+          items:
+            type: ["number", "null"]
+        sma50:
+          type: array
+          items:
+            type: ["number", "null"]
+        ema20:
+          type: array
+          items:
+            type: ["number", "null"]
+        bbUpper:
+          type: array
+          items:
+            type: ["number", "null"]
+        bbMiddle:
+          type: array
+          items:
+            type: ["number", "null"]
+        bbLower:
+          type: array
+          items:
+            type: ["number", "null"]
+        rsi:
+          type: array
+          items:
+            type: ["number", "null"]
+        macd:
+          type: array
+          items:
+            type: ["number", "null"]
+        macdSignal:
+          type: array
+          items:
+            type: ["number", "null"]
+        macdHistogram:
+          type: array
+          items:
+            type: ["number", "null"]
+        volume:
+          type: array
+          items:
+            type: number
+
+    CandleResponse:
+      type: object
+      required:
+        - ticker
+        - period
+        - candles
+        - indicators
+      properties:
+        ticker:
+          type: string
+        period:
+          type: string
+        candles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Candle"
+        indicators:
+          $ref: "#/components/schemas/TechnicalIndicators"
+
+    MarketSummary:
+      type: object
+      required:
+        - totalStocks
+        - advancers
+        - decliners
+        - unchanged
+        - totalVolume
+        - avgChangePercent
+        - marketCap
+        - spyChange
+        - qqqChange
+        - diaChange
+      properties:
+        totalStocks:
+          type: integer
+        advancers:
+          type: integer
+        decliners:
+          type: integer
+        unchanged:
+          type: integer
+        totalVolume:
+          type: number
+        avgChangePercent:
+          type: number
+        marketCap:
+          type: number
+        spyChange:
+          type: number
+        qqqChange:
+          type: number
+        diaChange:
+          type: number
+
+    SectorPerformance:
+      type: object
+      required:
+        - sector
+        - change
+        - stocks
+        - marketCap
+      properties:
+        sector:
+          type: string
+        change:
+          type: number
+        stocks:
+          type: integer
+        marketCap:
+          type: number
+
+    TopMovers:
+      type: object
+      required:
+        - gainers
+        - losers
+        - mostActive
+      properties:
+        gainers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+        losers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+        mostActive:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"

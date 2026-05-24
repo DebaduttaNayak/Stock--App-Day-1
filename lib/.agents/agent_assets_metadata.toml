@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "kqlC0xVQOmTdkHceLIkDc"
+uri = "file://stock-screener.tar.gz"
+type = "unspecified"
+title = "Stock Screener — Source Code"
